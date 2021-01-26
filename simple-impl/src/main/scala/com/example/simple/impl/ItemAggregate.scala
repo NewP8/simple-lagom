@@ -1,9 +1,5 @@
 package com.example.simple.impl
 
-import play.api.libs.json.Json
-import play.api.libs.json.Format
-import java.time.LocalDateTime
-
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.cluster.sharding.typed.scaladsl._
@@ -12,13 +8,11 @@ import akka.persistence.typed.scaladsl.Effect
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import akka.persistence.typed.scaladsl.ReplyEffect
 import com.lightbend.lagom.scaladsl.persistence.AggregateEvent
+import com.lightbend.lagom.scaladsl.persistence.AggregateEventShards
 import com.lightbend.lagom.scaladsl.persistence.AggregateEventTag
 import com.lightbend.lagom.scaladsl.persistence.AkkaTaggerAdapter
-import com.lightbend.lagom.scaladsl.playjson.JsonSerializer
-import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
-import play.api.libs.json._
-
-import scala.collection.immutable.Seq
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 /**
   * This provides an event sourced behavior. It has a state, [[SimpleState]], which
@@ -43,9 +37,12 @@ object ItemBehavior {
 
   /**
     * Given a sharding [[EntityContext]] this function produces an Akka [[Behavior]] for the aggregate.
-    */ 
-  def create(entityContext: EntityContext[ItemCommand]): Behavior[ItemCommand] = {
-    val persistenceId: PersistenceId = PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
+    */
+  def create(
+      entityContext: EntityContext[ItemCommand]
+  ): Behavior[ItemCommand] = {
+    val persistenceId: PersistenceId =
+      PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId)
 
     create(persistenceId)
       .withTagger(
@@ -59,7 +56,8 @@ object ItemBehavior {
   /*
    * This method is extracted to write unit tests that are completely independendant to Akka Cluster.
    */
-  private[impl] def create(persistenceId: PersistenceId) = EventSourcedBehavior
+  private[impl] def create(persistenceId: PersistenceId) =
+    EventSourcedBehavior
       .withEnforcedReplies[ItemCommand, ItemEvent, ItemState](
         persistenceId = persistenceId,
         emptyState = ItemState.initial,
@@ -71,10 +69,10 @@ object ItemBehavior {
 /**
   * The current state of the Aggregate.
   */
-case class ItemState(itemId:Int, message: String) {
+case class ItemState(itemId: Int, message: String) {
   def applyCommand(cmd: ItemCommand): ReplyEffect[ItemEvent, ItemState] =
     cmd match {
-      case x: AddItem              => onAddItem(x)
+      case x: AddItem => onAddItem(x)
       case x: GetItem => onGetItem(x)
     }
 
@@ -84,11 +82,13 @@ case class ItemState(itemId:Int, message: String) {
     }
   private def onGetItem(cmd: GetItem): ReplyEffect[ItemEvent, ItemState] = {
     // lettura item
-    Effect.reply(cmd.replyTo)(s"item: $itemId - messaggio: $message") // s"$message, ${cmd.name}!"))
+    Effect.reply(cmd.replyTo)(
+      s"item: $itemId - messaggio: $message"
+    ) // s"$message, ${cmd.name}!"))
   }
 
   private def onAddItem(
-    cmd: AddItem
+      cmd: AddItem
   ): ReplyEffect[ItemEvent, ItemState] =
     Effect
       .persist(ItemAdded(cmd.itemId, cmd.message))
@@ -130,12 +130,14 @@ object ItemState {
 /**
   * This interface defines all the events that the ItemAggregate supports.
   */
-sealed trait ItemEvent extends AggregateEvent[ItemEvent] {
-  def aggregateTag: AggregateEventTag[ItemEvent] = ItemEvent.Tag
+object ItemEvent {
+  val NumShards = 4
+  val Tag = AggregateEventTag.sharded[ItemEvent](NumShards)
 }
 
-object ItemEvent {
-  val Tag: AggregateEventTag[ItemEvent] = AggregateEventTag[ItemEvent]
+sealed trait ItemEvent extends AggregateEvent[ItemEvent] {
+  override def aggregateTag: AggregateEventShards[ItemEvent] =
+    ItemEvent.Tag
 }
 
 /**
@@ -164,8 +166,7 @@ trait ItemCommandSerializable
 /**
   * This interface defines all the commands that the ItemAggregate supports.
   */
-sealed trait ItemCommand
-    extends ItemCommandSerializable
+sealed trait ItemCommand extends ItemCommandSerializable
 
 /**
   * A command to switch the greeting message.
@@ -173,7 +174,7 @@ sealed trait ItemCommand
   * It has a reply type of [[Confirmation]], which is sent back to the caller
   * when all the events emitted by this command are successfully persisted.
   */
-case class AddItem(itemId:Int, message: String, replyTo: ActorRef[Conferma])
+case class AddItem(itemId: Int, message: String, replyTo: ActorRef[Conferma])
     extends ItemCommand
 
 /**
@@ -182,8 +183,7 @@ case class AddItem(itemId:Int, message: String, replyTo: ActorRef[Conferma])
   * The reply type is String, and will contain the message to say to that
   * person.
   */
-case class GetItem(itemId: Int, replyTo: ActorRef[String])
-    extends ItemCommand
+case class GetItem(itemId: Int, replyTo: ActorRef[String]) extends ItemCommand
 
 //final case class Greeting(message: String)
 //
@@ -199,13 +199,13 @@ case object Conferma {
 
 // case object Accettato extends Conferma
 
-case class Accettato(reason: String)  extends Conferma
+case class Accettato(reason: String) extends Conferma
 
 object Accettato {
   implicit val format: Format[Accettato] = Json.format
 }
 
-case class Respinto(reason: String)  extends Conferma
+case class Respinto(reason: String) extends Conferma
 
 object Respinto {
   implicit val format: Format[Respinto] = Json.format
@@ -222,4 +222,3 @@ object Respinto {
 //object Rejected {
 //  implicit val format: Format[Rejected] = Json.format
 //}
-
