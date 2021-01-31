@@ -18,21 +18,21 @@ class SimpleServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterA
 
   override protected def afterAll(): Unit = server.stop()
 
-  "simple service" should {
-
-    "say hello" in {
-      client.hello("Alice").invoke().map { answer =>
-        answer should ===("Hello, Alice!")
-      }
-    }
-
-    "allow responding with a custom message" in {
-      for {
-        _ <- client.useGreeting("Bob").invoke(GreetingMessage("Hi"))
-        answer <- client.hello("Bob").invoke()
-      } yield {
-        answer should ===("Hi, Bob!")
-      }
-    }
-  }
+//  "simple service" should {
+//
+//    "say hello" in {
+//      client.hello("Alice").invoke().map { answer =>
+//        answer should ===("Hello, Alice!")
+//      }
+//    }
+//
+//    "allow responding with a custom message" in {
+//      for {
+//        _ <- client.useGreeting("Bob").invoke(GreetingMessage("Hi"))
+//        answer <- client.hello("Bob").invoke()
+//      } yield {
+//        answer should ===("Hi, Bob!")
+//      }
+//    }
+//  }
 }

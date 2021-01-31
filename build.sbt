@@ -45,8 +45,7 @@ lazy val `simple-impl` = (project in file("simple-impl"))
   .enablePlugins(LagomScala)
   .settings(
     libraryDependencies ++= Seq(
-      lagomScaladslPersistenceCassandra, // write side
-      lagomScaladslPersistenceJdbc, // read side
+      lagomScaladslPersistenceJdbc,
       // lagomScaladslKafkaBroker,
       lagomScaladslTestKit,
       macwire,
@@ -61,4 +60,5 @@ lazy val `simple-impl` = (project in file("simple-impl"))
   .settings(lagomForkedTestSettings)
   .dependsOn(`simple-api`)
 
+lagomCassandraEnabled in ThisBuild := false
 lagomKafkaEnabled in ThisBuild := false

@@ -2,11 +2,12 @@ package com.example.simple.impl
 
 import akka.cluster.sharding.typed.scaladsl.Entity
 import com.example.simple.api.SimpleService
+import com.example.simple.impl.ItemAggregate.{Accettato, Conferma, ItemAdded, Respinto, formatItemState}
 import com.lightbend.lagom.scaladsl.api.ServiceLocator
 import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
-import com.lightbend.lagom.scaladsl.persistence.cassandra.WriteSideCassandraPersistenceComponents
-import com.lightbend.lagom.scaladsl.persistence.slick.ReadSideSlickPersistenceComponents
+import com.lightbend.lagom.scaladsl.persistence.jdbc.JdbcPersistenceComponents
+import com.lightbend.lagom.scaladsl.persistence.slick.SlickPersistenceComponents
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializer
 import com.lightbend.lagom.scaladsl.server._
 import play.api.db.HikariCPComponents
@@ -32,8 +33,10 @@ class SimpleLoader extends LagomApplicationLoader {
 
 abstract class SimpleApplication(context: LagomApplicationContext)
     extends LagomApplication(context)
-    with WriteSideCassandraPersistenceComponents
-    with ReadSideSlickPersistenceComponents
+      with SlickPersistenceComponents
+      //JdbcPersistenceComponents
+//    with WriteSideCassandraPersistenceComponents
+//    with ReadSideSlickPersistenceComponents
     with HikariCPComponents
     // with LagomKafkaComponents
     with AhcWSComponents {
@@ -64,35 +67,27 @@ abstract class SimpleApplication(context: LagomApplicationContext)
         JsonSerializer[ItemAdded],
         JsonSerializer[ItemState],
         // the replies use play-json as well
-        JsonSerializer[Greeting],
-        JsonSerializer[Conferma],
+        // JsonSerializer[Conferma],
         JsonSerializer[Accettato],
         JsonSerializer[Respinto],
-        // state and events can use play-json, but commands should use jackson because of ActorRef[T] (see application.conf)
-        JsonSerializer[GreetingMessageChanged],
-        JsonSerializer[SimpleState],
-        // the replies use play-json as well
-        JsonSerializer[Greeting],
-        JsonSerializer[Confirmation],
-        JsonSerializer[Accepted],
-        JsonSerializer[Rejected]
+//        JsonSerializer[Greeting],
+//        JsonSerializer[GreetingMessageChanged],
+//        JsonSerializer[SimpleState],
+//        JsonSerializer[Greeting],
+//        JsonSerializer[Confirmation],
+//        JsonSerializer[Accepted],
+//        JsonSerializer[Rejected]
       )
   }
 
-  lazy val itemRepository: ItemRepository =
-    wire[ItemRepository]
-  readSide.register(wire[ItemProcessor])
+//  lazy val itemRepository: ItemRepository =
+//    wire[ItemRepository]
+//  readSide.register(wire[ItemProcessor])
 
-  // Initialize the sharding of the Aggregate. The following starts the aggregate Behavior under
-  // a given sharding entity typeKey.
+
   clusterSharding.init(
-    Entity(SimpleState.typeKey)(entityContext =>
-      SimpleBehavior.create(entityContext)
-    )
-  )
-  clusterSharding.init(
-    Entity(ItemState.typeKey)(entityContext =>
-      ItemBehavior.create(entityContext)
+    Entity(ItemAggregate.typeKey)(entityContext =>
+      ItemAggregate(entityContext)
     )
   )
 
