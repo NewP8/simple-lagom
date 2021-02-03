@@ -57,7 +57,7 @@ lazy val `simple-impl` = (project in file("simple-impl"))
     )
   )
   //.settings(dockerSettings)
-  .settings(lagomForkedTestSettings)
+  // .settings(lagomForkedTestSettings) in teooria serve solo se si usa cassandra
   .dependsOn(`simple-api`)
 
 lagomCassandraEnabled in ThisBuild := false
