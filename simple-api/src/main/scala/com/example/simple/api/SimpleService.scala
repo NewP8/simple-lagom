@@ -7,6 +7,8 @@ import com.lightbend.lagom.scaladsl.api.Service
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.transport.Method.GET
 import com.lightbend.lagom.scaladsl.api.transport.Method.POST
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 object SimpleService {
   val TOPIC_NAME = "conti"
@@ -59,3 +61,13 @@ trait SimpleService extends Service {
 //object User {
 //  implicit val format: Format[User] = Json.format[User]
 //}
+
+final case class ContoView(iban: String, importo: Int)
+
+object ContoView {
+  implicit val format: Format[ContoView] = Json.format
+  // For case classes with hand-written companion objects, .tupled only works if
+  // you manually extend the correct Scala function type. See SI-3664 and SI-4808.
+  def tupled(t: (String, Int)) =
+    ContoView(t._1, t._2)
+}

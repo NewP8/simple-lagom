@@ -22,7 +22,6 @@ object Conto {
   trait CommandSerializable
   sealed trait Command extends CommandSerializable
   case class CreaConto(
-      iban: String,
       importo: Int,
       replyTo: ActorRef[Conferma]
   ) extends Command
@@ -42,7 +41,6 @@ object Conto {
   final case class TransazioneEseguita(bilancio: Int) extends Conferma
   final case class TransazioneRespinta(reason: String) extends Conferma
 
-//  implicit val format: Format[Conferma] = Json.format
   implicit val formatTransazioneEseguita: Format[TransazioneEseguita] =
     Json.format
   implicit val formatTransazioneRespinta: Format[TransazioneRespinta] =
@@ -58,9 +56,13 @@ object Conto {
     val Tag = AggregateEventTag[Event]
   }
 
-  final case class ContoCreato(importoIniziale: Int) extends Event
+  final case class ContoCreato(bilancio: Int) extends Event
+  final case class VersatoInConto(importo: Int, bilancio: Int) extends Event
+  final case class PrelevatoDaConto(importo: Int, bilancio: Int) extends Event
 
   implicit val formatContoCreato: Format[ContoCreato] = Json.format
+  implicit val formatVersatoInConto: Format[VersatoInConto] = Json.format
+  implicit val formatPrelevatoDaConto: Format[PrelevatoDaConto] = Json.format
 
   // BEHAVIOUR
   def initial: Conto = Conto(false, 0)
@@ -96,19 +98,19 @@ object Conto {
 }
 
 // STATE
-final case class Conto(creato: Boolean, importo: Int) {
+final case class Conto(giaCreato: Boolean, importo: Int) {
   import Conto._
 
   // COMMAND HANDLER
 
   def applyCommand(cmd: Command): ReplyEffect[Event, Conto] = {
     cmd match {
-      case CreaConto(iban, importoIniziale, replyTo) =>
+      case CreaConto(importoIniziale, replyTo) =>
         onCreaConto(importoIniziale, replyTo)
       case VersaInConto(importoVersato, replyTo) =>
-        Effect.reply(replyTo)(TransazioneRespinta("nyi"))
+        onVersaInConto(importoVersato, replyTo)
       case PrelevaDaConto(importoPrelevato, replyTo) =>
-        Effect.reply(replyTo)(TransazioneRespinta("nyi"))
+        onPrelevaDaConto(importoPrelevato, replyTo)
       case BilancioConto(replyTo) => Effect.reply(replyTo)(importo)
     }
   }
@@ -117,7 +119,7 @@ final case class Conto(creato: Boolean, importo: Int) {
       importoIniziale: Int,
       replyTo: ActorRef[Conferma]
   ): ReplyEffect[Event, Conto] = {
-    if (creato == true)
+    if (giaCreato)
       Effect.reply(replyTo)(TransazioneRespinta("Conto gia esistente"))
     else
       Effect
@@ -127,11 +129,54 @@ final case class Conto(creato: Boolean, importo: Int) {
         )
   }
 
+  private def onVersaInConto(
+      importoDaVersare: Int,
+      replyTo: ActorRef[Conferma]
+  ): ReplyEffect[Event, Conto] = {
+    if (giaCreato)
+      Effect
+        .persist(
+          VersatoInConto(importoDaVersare, importo + importoDaVersare)
+        )
+        .thenReply(replyTo)(updatedCart =>
+          TransazioneEseguita(updatedCart.importo)
+        )
+    else
+      Effect.reply(replyTo)(TransazioneRespinta("Il conto indicato non esiste"))
+
+  }
+
+  private def onPrelevaDaConto(
+      importoDaPrelevare: Int,
+      replyTo: ActorRef[Conferma]
+  ): ReplyEffect[Event, Conto] = {
+    if (!giaCreato)
+      Effect.reply(replyTo)(TransazioneRespinta("Il conto indicato non esiste"))
+    if (importoDaPrelevare > importo)
+      Effect.reply(replyTo)(TransazioneRespinta("Credito insufficiente"))
+    else
+      Effect
+        .persist(
+          PrelevatoDaConto(
+            importoDaPrelevare,
+            importo - importoDaPrelevare
+          )
+        )
+        .thenReply(replyTo)(updatedCart =>
+          TransazioneEseguita(updatedCart.importo)
+        )
+  }
+
   // EVENT HANDLER
 
   def applyEvent(evt: Event): Conto =
     evt match {
-      case ContoCreato(importoIniziale) => copy(creato = true, importoIniziale)
+      case ContoCreato(bilancio) =>
+        copy(giaCreato = true, bilancio)
+      case VersatoInConto(_, bilancio) =>
+        copy(importo = bilancio)
+      case PrelevatoDaConto(_, bilancio) =>
+        copy(importo = bilancio)
     }
 
 }

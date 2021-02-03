@@ -3,11 +3,8 @@ package com.example.simple.impl
 import akka.Done
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.cluster.sharding.typed.scaladsl.EntityRef
-import com.example.simple.api.SimpleService
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-
-import scala.reflect.internal.NoPhase.id
 import akka.util.Timeout
+import com.example.simple.api.SimpleService
 import com.example.simple.impl.Conto.BilancioConto
 import com.example.simple.impl.Conto.Conferma
 import com.example.simple.impl.Conto.CreaConto
@@ -15,6 +12,7 @@ import com.example.simple.impl.Conto.PrelevaDaConto
 import com.example.simple.impl.Conto.TransazioneEseguita
 import com.example.simple.impl.Conto.TransazioneRespinta
 import com.example.simple.impl.Conto.VersaInConto
+import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.transport.BadRequest
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 
@@ -24,8 +22,9 @@ import scala.concurrent.duration._
 
 class SimpleServiceImpl(
     clusterSharding: ClusterSharding,
-    persistentEntityRegistry: PersistentEntityRegistry
-    // itemRepository: ItemRepository
+    persistentEntityRegistry: PersistentEntityRegistry,
+    contoRepository: ContoRepository
+    // ReadSide: ReadSide, myDatabase: MyDatabase
 )(implicit ec: ExecutionContext)
     extends SimpleService {
 
@@ -43,7 +42,7 @@ class SimpleServiceImpl(
     ServiceCall { importoIniziale =>
       val ref = contoRef(iban)
       ref
-        .ask[Conferma](replyTo => CreaConto(iban, importoIniziale, replyTo))
+        .ask[Conferma](replyTo => CreaConto(importoIniziale, replyTo))
         .map {
           case TransazioneEseguita(_) => Done
           case TransazioneRespinta(reason) =>
@@ -53,7 +52,7 @@ class SimpleServiceImpl(
 
   override def versaInConto(iban: String) =
     ServiceCall { importo =>
-      val ref = contoRef(id.toString)
+      val ref = contoRef(iban)
       ref
         .ask[Conferma](replyTo => VersaInConto(importo, replyTo))
         .map {
@@ -65,7 +64,7 @@ class SimpleServiceImpl(
 
   override def prelevaDaConto(iban: String) =
     ServiceCall { importo =>
-      val ref = contoRef(id.toString)
+      val ref = contoRef(iban)
       ref
         .ask[Conferma](replyTo => PrelevaDaConto(importo, replyTo))
         .map {
@@ -77,7 +76,7 @@ class SimpleServiceImpl(
 
   override def bilancioConto(iban: String) =
     ServiceCall { _ =>
-      val ref = contoRef(id.toString)
+      val ref = contoRef(iban)
       ref
         .ask[Int](replyTo => BilancioConto(replyTo))
     }
