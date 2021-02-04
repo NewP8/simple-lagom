@@ -9,7 +9,9 @@ import com.example.simple.impl.Conto.TransazioneRespinta
 import com.example.simple.impl.Conto.VersatoInConto
 import com.lightbend.lagom.scaladsl.api.ServiceLocator
 import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
+import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
+import com.lightbend.lagom.scaladsl.persistence.jdbc.JdbcPersistenceComponents
 import com.lightbend.lagom.scaladsl.persistence.slick.SlickPersistenceComponents
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializer
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
@@ -36,14 +38,12 @@ class SimpleLoader extends LagomApplicationLoader {
 abstract class SimpleApplication(context: LagomApplicationContext)
     extends LagomApplication(context)
     with SlickPersistenceComponents
-    //JdbcPersistenceComponents
+    with JdbcPersistenceComponents
 //    with WriteSideCassandraPersistenceComponents
 //    with ReadSideSlickPersistenceComponents
     with HikariCPComponents
-    // with LagomKafkaComponents
+    with LagomKafkaComponents
     with AhcWSComponents {
-
-  //implicit def executionContext: ExecutionContext
 
   override lazy val lagomServer: LagomServer =
     serverFor[SimpleService](wire[SimpleServiceImpl])
@@ -66,7 +66,6 @@ abstract class SimpleApplication(context: LagomApplicationContext)
   lazy val contoRepository: ContoRepository =
     wire[ContoRepository]
   readSide.register(wire[ContoProcessor])
-  // readSide.register[BlogEvent](new BlogEventProcessor(myDatabase))
 
   clusterSharding.init(
     Entity(Conto.typeKey)(entityContext => Conto(entityContext))

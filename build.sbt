@@ -1,3 +1,5 @@
+import com.lightbend.lagom.core.LagomVersion.{current => lagomVersion}
+
 organization in ThisBuild := "com.example"
 version in ThisBuild := "1.0-SNAPSHOT"
 
@@ -10,7 +12,8 @@ val macwire = "com.softwaremill.macwire" %% "macros" % "2.3.3" % "provided"
 val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % Test
 
 // val akkaDiscoveryKubernetesApi = "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api"                 % "1.0.9"
-// val lagomScaladslAkkaDiscovery = "com.lightbend.lagom"          %% "lagom-scaladsl-akka-discovery-service-locator" % lagomVersion
+val lagomScaladslAkkaDiscovery =
+  "com.lightbend.lagom" %% "lagom-scaladsl-akka-discovery-service-locator" % lagomVersion
 // vedere per deploy (o minikube)
 
 // ThisBuild / scalacOptions ++= List("-encoding", "utf8", "-deprecation", "-feature", "-unchecked", "-Xfatal-warnings")
@@ -32,7 +35,7 @@ val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % Test
 //}
 
 lazy val `simple` = (project in file("."))
-  .aggregate(`simple-api`, `simple-impl`)
+  .aggregate(`simple-api`, `simple-impl`, `sentinella-api`, `sentinella-impl`)
 
 lazy val `simple-api` = (project in file("simple-api"))
   .settings(
@@ -46,7 +49,7 @@ lazy val `simple-impl` = (project in file("simple-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomScaladslPersistenceJdbc,
-      // lagomScaladslKafkaBroker,
+      lagomScaladslKafkaBroker,
       lagomScaladslTestKit,
       macwire,
       scalaTest,
@@ -60,5 +63,25 @@ lazy val `simple-impl` = (project in file("simple-impl"))
   // .settings(lagomForkedTestSettings) in teooria serve solo se si usa cassandra
   .dependsOn(`simple-api`)
 
+lazy val `sentinella-api` = (project in file("sentinella-api"))
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslApi
+    )
+  )
+
+lazy val `sentinella-impl` = (project in file("sentinella-impl"))
+  .enablePlugins(LagomScala)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslKafkaClient,
+      lagomScaladslTestKit,
+      macwire,
+      scalaTest,
+      lagomScaladslAkkaDiscovery
+    )
+  )
+  .dependsOn(`sentinella-api`, `simple-api`)
+
 lagomCassandraEnabled in ThisBuild := false
-lagomKafkaEnabled in ThisBuild := false
+// lagomKafkaEnabled in ThisBuild := false

@@ -4,16 +4,23 @@ import akka.Done
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.cluster.sharding.typed.scaladsl.EntityRef
 import akka.util.Timeout
+import com.example.simple.api.ContoEventDto
 import com.example.simple.api.SimpleService
 import com.example.simple.impl.Conto.BilancioConto
 import com.example.simple.impl.Conto.Conferma
+import com.example.simple.impl.Conto.ContoCreato
 import com.example.simple.impl.Conto.CreaConto
 import com.example.simple.impl.Conto.PrelevaDaConto
+import com.example.simple.impl.Conto.PrelevatoDaConto
 import com.example.simple.impl.Conto.TransazioneEseguita
 import com.example.simple.impl.Conto.TransazioneRespinta
 import com.example.simple.impl.Conto.VersaInConto
+import com.example.simple.impl.Conto.VersatoInConto
 import com.lightbend.lagom.scaladsl.api.ServiceCall
+import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.transport.BadRequest
+import com.lightbend.lagom.scaladsl.broker.TopicProducer
+import com.lightbend.lagom.scaladsl.persistence.EventStreamElement
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 
 import scala.concurrent.ExecutionContext
@@ -81,19 +88,25 @@ class SimpleServiceImpl(
         .ask[Int](replyTo => BilancioConto(replyTo))
     }
 
-  //  override def greetingsTopic(): Topic[api.GreetingMessageChanged] =
-//    TopicProducer.singleStreamWithOffset { fromOffset =>
-//      persistentEntityRegistry
-//        .eventStream(SimpleEvent.Tag, fromOffset)
-//        .map(ev => (convertEvent(ev), ev.offset))
-//    }
+  override def contiTopic: Topic[ContoEventDto] =
+    TopicProducer.singleStreamWithOffset { fromOffset =>
+      persistentEntityRegistry
+        .eventStream(Conto.Event.Tag, fromOffset)
+        .map(ev => (convertEvent(ev), ev.offset))
+    // eventualmente filtra con Nil e mapConcat
+    }
 
-//  private def convertEvent(
-//      helloEvent: EventStreamElement[SimpleEvent]
-//  ): api.GreetingMessageChanged = {
-//    helloEvent.event match {
-//      case GreetingMessageChanged(msg) =>
-//        api.GreetingMessageChanged(helloEvent.entityId, msg)
-//    }
-//  }
+  private def convertEvent(
+      eventoConto: EventStreamElement[Conto.Event]
+  ): ContoEventDto = {
+    // recupera iban
+    eventoConto.event match {
+      case x: ContoCreato =>
+        ContoEventDto("creazione conto", eventoConto.entityId, x.bilancio)
+      case x: VersatoInConto =>
+        ContoEventDto("versamento in conto", eventoConto.entityId, x.importo)
+      case x: PrelevatoDaConto =>
+        ContoEventDto("prelievo da conto", eventoConto.entityId, x.importo)
+    }
+  }
 }

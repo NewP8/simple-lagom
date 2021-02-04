@@ -90,7 +90,7 @@ object Conto {
       )
       .withRetention(
         RetentionCriteria
-          .snapshotEvery(numberOfEvents = 10, keepNSnapshots = 2)
+          .snapshotEvery(numberOfEvents = 4, keepNSnapshots = 2)
       )
   }
 

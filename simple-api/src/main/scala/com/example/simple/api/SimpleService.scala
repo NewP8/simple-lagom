@@ -5,6 +5,9 @@ import akka.NotUsed
 import com.lightbend.lagom.scaladsl.api.Descriptor
 import com.lightbend.lagom.scaladsl.api.Service
 import com.lightbend.lagom.scaladsl.api.ServiceCall
+import com.lightbend.lagom.scaladsl.api.broker.Topic
+import com.lightbend.lagom.scaladsl.api.broker.kafka.KafkaProperties
+import com.lightbend.lagom.scaladsl.api.broker.kafka.PartitionKeyStrategy
 import com.lightbend.lagom.scaladsl.api.transport.Method.GET
 import com.lightbend.lagom.scaladsl.api.transport.Method.POST
 import play.api.libs.json.Format
@@ -22,6 +25,8 @@ trait SimpleService extends Service {
   def prelevaDaConto(iban: String): ServiceCall[Int, Done]
   def bilancioConto(iban: String): ServiceCall[NotUsed, Int]
 
+  def contiTopic: Topic[ContoEventDto]
+
   override final def descriptor: Descriptor = {
     import Service._
     // @formatter:off
@@ -34,24 +39,19 @@ trait SimpleService extends Service {
         restCall(GET,"/api/conto/:iban", bilancioConto _)
         // implicitamente ogni chiamata riceve MessageSerializer per il tipo indicato
         //  call(sayHello)(MessageSerializer.StringMessageSerializer, MessageSerializer.StringMessageSerializer)
-      )
-    
+      )    
 
-//      .withTopics(
-//        topic(SimpleService.TOPIC_NAME, greetingsTopic _)
-//          // Kafka partitions messages, messages within the same partition will
-//          // be delivered in order, to ensure that all messages for the same user
-//          // go to the same partition (and hence are delivered in order with respect
-//          // to that user), we configure a partition key strategy that extracts the
-//          // name as the partition key.
-//          .addProperty(
-//            KafkaProperties.partitionKeyStrategy,
-//            PartitionKeyStrategy[GreetingMessageChanged](_.name)
-//          )
-//      )
+      .withTopics(
+        topic(SimpleService.TOPIC_NAME, contiTopic)
+          .addProperty(
+            KafkaProperties.partitionKeyStrategy,
+            PartitionKeyStrategy[ContoEventDto](_.iban)
+          )
+      )
       .withAutoAcl(true)
     // @formatter:on
   }
+
 }
 
 // eventuale Message serialization per dati scambiati
@@ -66,8 +66,11 @@ final case class ContoView(iban: String, importo: Int)
 
 object ContoView {
   implicit val format: Format[ContoView] = Json.format
-  // For case classes with hand-written companion objects, .tupled only works if
-  // you manually extend the correct Scala function type. See SI-3664 and SI-4808.
   def tupled(t: (String, Int)) =
     ContoView(t._1, t._2)
+}
+
+case class ContoEventDto(tipoEvento: String, iban: String, importo: Int)
+object ContoEventDto {
+  implicit val format: Format[ContoEventDto] = Json.format[ContoEventDto]
 }
