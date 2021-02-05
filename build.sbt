@@ -1,38 +1,36 @@
-import com.lightbend.lagom.core.LagomVersion.{current => lagomVersion}
-
 organization in ThisBuild := "com.example"
-version in ThisBuild := "1.0-SNAPSHOT"
+version in ThisBuild := sys.env.get("SERVICE_VERSION").getOrElse("1.0.0")
+
+// per aggiornare versione a ultimo commit git https://developer.lightbend.com/guides/openshift-deployment/lagom/building-using-sbt.html
+//version in ThisBuild ~= (_.replace('+', '-'))
+//dynver in ThisBuild ~= (_.replace('+', '-'))
 
 // the Scala version that will be used for cross-compiled libraries
-scalaVersion in ThisBuild := "2.13.0"
+scalaVersion in ThisBuild := "2.13.4"
+
+lagomKafkaPropertiesFile in ThisBuild :=
+  Some(
+    (baseDirectory in ThisBuild).value / "project" / "kafka-server.properties"
+  )
 
 val postgresDriver = "org.postgresql" % "postgresql" % "42.2.18"
-
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.3.3" % "provided"
 val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % Test
-
-// val akkaDiscoveryKubernetesApi = "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api"                 % "1.0.9"
-val lagomScaladslAkkaDiscovery =
-  "com.lightbend.lagom" %% "lagom-scaladsl-akka-discovery-service-locator" % lagomVersion
-// vedere per deploy (o minikube)
+val akkaDiscoveryKubernetesApi =
+  "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.9"
+// usata per scoprire nodi per formazione inizialer di cluster
+// (https://developer.lightbend.com/guides/openshift-deployment/lagom/forming-a-cluster.html)
 
 // ThisBuild / scalacOptions ++= List("-encoding", "utf8", "-deprecation", "-feature", "-unchecked", "-Xfatal-warnings")
 
-// ---------------------------
-// |* configurazione DOCKER *|
-// ---------------------------
 
-//def dockerSettings = Seq(
-//  dockerUpdateLatest := true,
-//  dockerBaseImage := getDockerBaseImage(),
-//  dockerUsername := sys.props.get("docker.username"),
-//  dockerRepository := sys.props.get("docker.registry")
-//)
-//
-//def getDockerBaseImage(): String = sys.props.get("java.version") match {
-//  case Some(v) if v.startsWith("11") => "adoptopenjdk/openjdk11"
-//  case _                             => "adoptopenjdk/openjdk8"
-//}
+def dockerSettings =
+  Seq(
+    dockerUpdateLatest := true,
+    dockerBaseImage := "adoptopenjdk:11-jre-hotspot",
+//    dockerUsername := sys.props.get("docker.username"),
+//    dockerRepository := sys.props.get("docker.registry")
+  )
 
 lazy val `simple` = (project in file("."))
   .aggregate(`simple-api`, `simple-impl`, `sentinella-api`, `sentinella-impl`)
@@ -54,12 +52,12 @@ lazy val `simple-impl` = (project in file("simple-impl"))
       macwire,
       scalaTest,
       postgresDriver,
-//      lagomScaladslAkkaDiscovery,
-//      akkaDiscoveryKubernetesApi,
+      lagomScaladslAkkaDiscovery,
+      akkaDiscoveryKubernetesApi,
       "com.typesafe.akka" %% "akka-persistence-testkit" % "2.6.8" % Test
     )
   )
-  //.settings(dockerSettings)
+  .settings(dockerSettings)
   // .settings(lagomForkedTestSettings) in teooria serve solo se si usa cassandra
   .dependsOn(`simple-api`)
 
@@ -78,10 +76,11 @@ lazy val `sentinella-impl` = (project in file("sentinella-impl"))
       lagomScaladslTestKit,
       macwire,
       scalaTest,
-      lagomScaladslAkkaDiscovery
+      lagomScaladslAkkaDiscovery,
+      akkaDiscoveryKubernetesApi
     )
   )
+  .settings(dockerSettings)
   .dependsOn(`sentinella-api`, `simple-api`)
 
 lagomCassandraEnabled in ThisBuild := false
-// lagomKafkaEnabled in ThisBuild := false

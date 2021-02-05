@@ -7,8 +7,7 @@ import com.example.simple.impl.Conto.PrelevatoDaConto
 import com.example.simple.impl.Conto.TransazioneEseguita
 import com.example.simple.impl.Conto.TransazioneRespinta
 import com.example.simple.impl.Conto.VersatoInConto
-import com.lightbend.lagom.scaladsl.api.ServiceLocator
-import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
+import com.lightbend.lagom.scaladsl.akka.discovery.AkkaDiscoveryComponents
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import com.lightbend.lagom.scaladsl.persistence.jdbc.JdbcPersistenceComponents
@@ -25,9 +24,7 @@ import scala.collection.immutable.Seq
 class SimpleLoader extends LagomApplicationLoader {
 
   override def load(context: LagomApplicationContext): LagomApplication =
-    new SimpleApplication(context) {
-      override def serviceLocator: ServiceLocator = NoServiceLocator
-    }
+    new SimpleApplication(context) with AkkaDiscoveryComponents
 
   override def loadDevMode(context: LagomApplicationContext): LagomApplication =
     new SimpleApplication(context) with LagomDevModeComponents
