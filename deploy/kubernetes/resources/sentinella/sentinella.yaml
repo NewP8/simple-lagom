@@ -42,4 +42,4 @@ spec:
       targetPort: 9000
   selector:
     app: sentinella
-  type: LoadBalancer
+  clusterIP: None
