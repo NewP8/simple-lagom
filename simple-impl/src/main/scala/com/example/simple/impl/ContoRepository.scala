@@ -9,13 +9,10 @@ import scala.concurrent.Future
 
 class ContoRepository(database: Database) {
 
-  // itemId: Int, message: String
   class ItemTable(tag: Tag) extends Table[ContoView](tag, "conti") {
     def iban = column[String]("iban", O.PrimaryKey)
 
     def importo = column[Int]("importo")
-
-//    def checkoutDate = column[Option[Instant]]("checkout_date")
 
     def * = (iban, importo).mapTo[ContoView]
   }

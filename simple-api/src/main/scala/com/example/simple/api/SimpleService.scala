@@ -5,9 +5,6 @@ import akka.NotUsed
 import com.lightbend.lagom.scaladsl.api.Descriptor
 import com.lightbend.lagom.scaladsl.api.Service
 import com.lightbend.lagom.scaladsl.api.ServiceCall
-import com.lightbend.lagom.scaladsl.api.broker.Topic
-import com.lightbend.lagom.scaladsl.api.broker.kafka.KafkaProperties
-import com.lightbend.lagom.scaladsl.api.broker.kafka.PartitionKeyStrategy
 import com.lightbend.lagom.scaladsl.api.transport.Method.GET
 import com.lightbend.lagom.scaladsl.api.transport.Method.POST
 import play.api.libs.json.Format
@@ -25,8 +22,6 @@ trait SimpleService extends Service {
   def prelevaDaConto(iban: String): ServiceCall[Int, Done]
   def bilancioConto(iban: String): ServiceCall[NotUsed, Int]
 
-  def contiTopic: Topic[ContoEventDto]
-
   override final def descriptor: Descriptor = {
     import Service._
     // @formatter:off
@@ -39,28 +34,12 @@ trait SimpleService extends Service {
         restCall(GET,"/api/conto/:iban", bilancioConto _)
         // implicitamente ogni chiamata riceve MessageSerializer per il tipo indicato
         //  call(sayHello)(MessageSerializer.StringMessageSerializer, MessageSerializer.StringMessageSerializer)
-      )    
-
-      .withTopics(
-        topic(SimpleService.TOPIC_NAME, contiTopic)
-          .addProperty(
-            KafkaProperties.partitionKeyStrategy,
-            PartitionKeyStrategy[ContoEventDto](_.iban)
-          )
       )
       .withAutoAcl(true)
     // @formatter:on
   }
 
 }
-
-// eventuale Message serialization per dati scambiati
-// (in questo caso sempre tipi dato semplici gia serializzati di default
-
-//case class User(id: Long,name: String,email: Option[String])
-//object User {
-//  implicit val format: Format[User] = Json.format[User]
-//}
 
 final case class ContoView(iban: String, importo: Int)
 

@@ -8,7 +8,6 @@ import com.example.simple.impl.Conto.TransazioneEseguita
 import com.example.simple.impl.Conto.TransazioneRespinta
 import com.example.simple.impl.Conto.VersatoInConto
 import com.lightbend.lagom.scaladsl.akka.discovery.AkkaDiscoveryComponents
-import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import com.lightbend.lagom.scaladsl.persistence.jdbc.JdbcPersistenceComponents
 import com.lightbend.lagom.scaladsl.persistence.slick.SlickPersistenceComponents
@@ -36,10 +35,7 @@ abstract class SimpleApplication(context: LagomApplicationContext)
     extends LagomApplication(context)
     with SlickPersistenceComponents
     with JdbcPersistenceComponents
-//    with WriteSideCassandraPersistenceComponents
-//    with ReadSideSlickPersistenceComponents
     with HikariCPComponents
-    with LagomKafkaComponents
     with AhcWSComponents {
 
   override lazy val lagomServer: LagomServer =

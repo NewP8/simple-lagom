@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: simple
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: simple
@@ -21,19 +21,16 @@ spec:
             - name: PLAY_CRYPTO_SECRET
               value: "7p6Oc6N74Svh+57Kd0W/k5dj4lgMJcqPFUwCQ/Dyuu4="
             - name: SIMPLE_DB_URL
-              value: "jdbc:postgresql://postgresql-simple:5432/simpledb"
+              value: "jdbc:postgresql://35.205.131.182/simpledb"
             - name: SIMPLE_DB_USER
               value: simpledb
             - name: SIMPLE_DB_PWD
-              value: simpledb
-#              valueFrom:
-#                secretKeyRef:
-#                  name: simple-secret
-#                  key: POSTGRES_DB_PASSWORD
-            - name: KAFKA_SERVICE_NAME
-              value: "_tcp-clients._tcp.strimzi-kafka-brokers"
+              valueFrom:
+                secretKeyRef:
+                  name: simple-secret
+                  key: db-password
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "1"
+              value: "3"
           resources:
             limits:
               memory: 512Mi
@@ -63,10 +60,10 @@ kind: Service
 metadata:
   name: simple
 spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 9000
   selector:
     app: simple
+  ports:
+    - name: http
+      port: 9000
+      targetPort: 9000
   type: LoadBalancer

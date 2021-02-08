@@ -15,6 +15,8 @@ import com.lightbend.lagom.scaladsl.persistence.AkkaTaggerAdapter
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
+import java.net.InetAddress
+
 object Conto {
 
   // COMMANDS
@@ -22,6 +24,7 @@ object Conto {
   trait CommandSerializable
   sealed trait Command extends CommandSerializable
   case class CreaConto(
+      iban: String,
       importo: Int,
       replyTo: ActorRef[Conferma]
   ) extends Command
@@ -56,7 +59,7 @@ object Conto {
     val Tag = AggregateEventTag[Event]
   }
 
-  final case class ContoCreato(bilancio: Int) extends Event
+  final case class ContoCreato(iban: String, bilancio: Int) extends Event
   final case class VersatoInConto(importo: Int, bilancio: Int) extends Event
   final case class PrelevatoDaConto(importo: Int, bilancio: Int) extends Event
 
@@ -65,7 +68,7 @@ object Conto {
   implicit val formatPrelevatoDaConto: Format[PrelevatoDaConto] = Json.format
 
   // BEHAVIOUR
-  def initial: Conto = Conto(false, 0)
+  def initial: Conto = Conto("", false, 0)
   val typeKey = EntityTypeKey[Command]("Conto")
 
   def apply(persistenceId: PersistenceId) =
@@ -98,15 +101,15 @@ object Conto {
 }
 
 // STATE
-final case class Conto(giaCreato: Boolean, importo: Int) {
+final case class Conto(iban: String, giaCreato: Boolean, importo: Int) {
   import Conto._
 
   // COMMAND HANDLER
 
   def applyCommand(cmd: Command): ReplyEffect[Event, Conto] = {
     cmd match {
-      case CreaConto(importoIniziale, replyTo) =>
-        onCreaConto(importoIniziale, replyTo)
+      case CreaConto(iban, importoIniziale, replyTo) =>
+        onCreaConto(iban, importoIniziale, replyTo)
       case VersaInConto(importoVersato, replyTo) =>
         onVersaInConto(importoVersato, replyTo)
       case PrelevaDaConto(importoPrelevato, replyTo) =>
@@ -116,6 +119,7 @@ final case class Conto(giaCreato: Boolean, importo: Int) {
   }
 
   private def onCreaConto(
+      iban: String,
       importoIniziale: Int,
       replyTo: ActorRef[Conferma]
   ): ReplyEffect[Event, Conto] = {
@@ -123,7 +127,7 @@ final case class Conto(giaCreato: Boolean, importo: Int) {
       Effect.reply(replyTo)(TransazioneRespinta("Conto gia esistente"))
     else
       Effect
-        .persist(ContoCreato(importoIniziale))
+        .persist(ContoCreato(iban, importoIniziale))
         .thenReply(replyTo)(updatedCart =>
           TransazioneEseguita(updatedCart.importo)
         )
@@ -169,14 +173,23 @@ final case class Conto(giaCreato: Boolean, importo: Int) {
 
   // EVENT HANDLER
 
-  def applyEvent(evt: Event): Conto =
-    evt match {
-      case ContoCreato(bilancio) =>
-        copy(giaCreato = true, bilancio)
-      case VersatoInConto(_, bilancio) =>
-        copy(importo = bilancio)
-      case PrelevatoDaConto(_, bilancio) =>
-        copy(importo = bilancio)
-    }
+  def applyEvent(evt: Event): Conto = {
+    val hostname = InetAddress.getLocalHost.getHostName
+    val localIpAddress = InetAddress.getLocalHost.getHostAddress
 
+    evt match {
+      case ContoCreato(iban, bilancio) => {
+        println(s"${iban} | _c | ${localIpAddress}")
+        copy(iban, giaCreato = true, bilancio)
+      }
+      case VersatoInConto(_, bilancio) => {
+        println(s"${iban} | _v | ${localIpAddress}")
+        copy(importo = bilancio)
+      }
+      case PrelevatoDaConto(_, bilancio) => {
+        println(s"${iban} | _p | ${localIpAddress}")
+        copy(importo = bilancio)
+      }
+    }
+  }
 }
