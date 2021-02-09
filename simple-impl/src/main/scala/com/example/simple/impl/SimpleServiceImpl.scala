@@ -23,6 +23,7 @@ import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.EventStreamElement
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 
+import java.net.InetAddress
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -48,6 +49,10 @@ class SimpleServiceImpl(
   override def creaConto(iban: String) =
     ServiceCall { importoIniziale =>
       val ref = contoRef(iban)
+
+      val hostname = InetAddress.getLocalHost.getHostName
+      println(s"- crea ${iban} su ${hostname}")
+
       ref
         .ask[Conferma](replyTo => CreaConto(importoIniziale, replyTo))
         .map {
@@ -60,6 +65,10 @@ class SimpleServiceImpl(
   override def versaInConto(iban: String) =
     ServiceCall { importo =>
       val ref = contoRef(iban)
+
+      val hostname = InetAddress.getLocalHost.getHostName
+      println(s"- varsa in ${iban} su ${hostname}")
+
       ref
         .ask[Conferma](replyTo => VersaInConto(importo, replyTo))
         .map {
@@ -72,6 +81,10 @@ class SimpleServiceImpl(
   override def prelevaDaConto(iban: String) =
     ServiceCall { importo =>
       val ref = contoRef(iban)
+
+      val hostname = InetAddress.getLocalHost.getHostName
+      println(s"- preleva da ${iban} su ${hostname}")
+
       ref
         .ask[Conferma](replyTo => PrelevaDaConto(importo, replyTo))
         .map {
@@ -83,6 +96,9 @@ class SimpleServiceImpl(
 
   override def bilancioConto(iban: String) =
     ServiceCall { _ =>
+      import java.net.InetAddress
+      val hostname = InetAddress.getLocalHost.getHostName
+      println(s"- bilancio di ${iban} su ${hostname}")
       val ref = contoRef(iban)
       ref
         .ask[Int](replyTo => BilancioConto(replyTo))

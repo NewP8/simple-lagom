@@ -28,7 +28,7 @@ pipeline {
     GOOGLE_TEST_CLUSTER_NAME = "simple-${SERVICE_VERSION}"
     GOOGLE_TEST_CLUSTER_VERSION = 'latest'
     GOOGLE_TEST_MACHINE_TYPE = 'n1-standard-4'
-    GOOGLE_TEST_NUM_NODES = '1'
+    GOOGLE_TEST_NUM_NODES = '3'
 
     APPS_NAMESPACE = 'kafka'
 
