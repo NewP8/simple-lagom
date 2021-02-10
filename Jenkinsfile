@@ -52,16 +52,23 @@ pipeline {
           --num-nodes=${GOOGLE_TEST_NUM_NODES}'
         sh 'gcloud container clusters get-credentials ${GOOGLE_TEST_CLUSTER_NAME} --project ${GOOGLE_PROJECT_NAME} --zone ${GOOGLE_ZONE_NAME}'
         sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/storage-class-slow.yaml'
-        // sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} namespace ${APPS_NAMESPACE}'
+        sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} namespace ${APPS_NAMESPACE}'
       }
     }
 
     // INGRESS - KONG
     stage ('Deploy Ingress') {
       steps {
-        sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME}  -f deploy/kubernetes/resources/kong/kong.yaml'
+        sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f https://bit.ly/kong-ingress-dbless'
+        // sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME}  -f deploy/kubernetes/resources/kong/kong.yaml'
         sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/simple-ingress.yaml -n ${APPS_NAMESPACE}'
         // -n ${APPS_NAMESPACE}'
+        // sh 'sed -i "s#REPLACE_WITH_GOOGLE_PROJECT_NAME#${GOOGLE_PROJECT_NAME}#g" deploy/kubernetes/resources/kong/values.yaml'
+        sh 'helm repo add kong https://charts.konghq.com'
+        sh 'helm repo update'
+        sh 'helm install --kube-context gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} --namespace ${APPS_NAMESPACE} kong kong/kong --set ingressController.installCRDs=false -f deploy/kubernetes/resources/kong/values.yaml --wait --timeout 600s'
+        sh 'sleep 10s'
+        sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/simple-ingress.yaml -n ${APPS_NAMESPACE}'
       }
     }
 
@@ -81,14 +88,14 @@ pipeline {
           steps {
              sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/simple/postgres-simple.yaml -n ${APPS_NAMESPACE}'
             sh 'sed -i "s#REPLACE_WITH_IMAGE_NAME#${SIMPLE_IMAGE}#g" deploy/kubernetes/resources/simple/simple.yaml'
-            sh 'sleep 10s'
+            sh 'sleep 4s'
             sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/simple/simple.yaml -n ${APPS_NAMESPACE}'
           }
         }
         stage('sentinella') {
           steps {
             sh 'sed -i "s#REPLACE_WITH_IMAGE_NAME#${SENTINELLA_IMAGE}#g" deploy/kubernetes/resources/sentinella/sentinella.yaml'
-            sh 'sleep 10s'
+            sh 'sleep 4s'
             sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/sentinella/sentinella.yaml -n ${APPS_NAMESPACE}'
           }
         }

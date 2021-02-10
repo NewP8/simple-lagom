@@ -59,4 +59,3 @@ spec:
     - name: http
       port: 9000
       targetPort: 9000
-#  clusterIP: None
