@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: simple
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: simple
@@ -26,14 +26,10 @@ spec:
               value: simpledb
             - name: SIMPLE_DB_PWD
               value: simpledb
-#              valueFrom:
-#                secretKeyRef:
-#                  name: simple-secret
-#                  key: POSTGRES_DB_PASSWORD
             - name: KAFKA_SERVICE_NAME
               value: "_tcp-clients._tcp.strimzi-kafka-brokers"
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "5"
+              value: "3"
           resources:
             limits:
               memory: 512Mi
@@ -63,10 +59,10 @@ kind: Service
 metadata:
   name: simple
 spec:
+  selector:
+    app: simple
   ports:
     - name: http
       port: 9000
       targetPort: 9000
-  selector:
-    app: simple
-  clusterIP: None
+#  clusterIP: None

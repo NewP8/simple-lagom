@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: fintech-ingress
+  name: simple-ingress
   annotations:
     kubernetes.io/ingress.class: kong
     # konghq.com/override: https-redirect
@@ -13,8 +13,7 @@ spec:
   #       - REPLACE_WITH_FQDN
   #     secretName: REPLACE_WITH_CERT_MANAGER_CERT_NAME
   rules:
-    - host: simple-host
-      http:
+    - http:
         paths:
           - path: "/api/conto"
             backend:
@@ -29,6 +28,10 @@ spec:
               serviceName: simple
               servicePort: 9000
           - path: "/api/versione"
+            backend:
+              serviceName: simple
+              servicePort: 9000
+          - path: "/sentinella/versione"
             backend:
               serviceName: sentinella
               servicePort: 9000
