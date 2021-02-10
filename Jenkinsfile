@@ -52,7 +52,7 @@ pipeline {
           --num-nodes=${GOOGLE_TEST_NUM_NODES}'
         sh 'gcloud container clusters get-credentials ${GOOGLE_TEST_CLUSTER_NAME} --project ${GOOGLE_PROJECT_NAME} --zone ${GOOGLE_ZONE_NAME}'
         sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/storage-class-slow.yaml'
-        sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} namespace ${APPS_NAMESPACE}'
+        // sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} namespace ${APPS_NAMESPACE}'
       }
     }
 
