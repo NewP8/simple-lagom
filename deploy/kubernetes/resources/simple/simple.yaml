@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: simple
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: simple
@@ -29,7 +29,7 @@ spec:
             - name: KAFKA_SERVICE_NAME
               value: "_tcp-clients._tcp.strimzi-kafka-brokers"
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "3"
+              value: "1"
           resources:
             limits:
               memory: 512Mi
