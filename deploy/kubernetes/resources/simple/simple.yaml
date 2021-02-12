@@ -30,7 +30,7 @@ spec:
                   name: simple-secret
                   key: db-password
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "3"
+              value: "1"
           resources:
             limits:
               memory: 512Mi
