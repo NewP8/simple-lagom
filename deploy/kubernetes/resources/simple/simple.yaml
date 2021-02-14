@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: simple
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: simple
@@ -30,7 +30,7 @@ spec:
                   name: simple-secret
                   key: db-password
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "1"
+              value: "2"
           resources:
             limits:
               memory: 512Mi

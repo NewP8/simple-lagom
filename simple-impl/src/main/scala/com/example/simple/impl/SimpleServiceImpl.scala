@@ -41,11 +41,10 @@ class SimpleServiceImpl(
 
   override def creaConto(iban: String) =
     ServiceCall { importoIniziale =>
-      val ref = contoRef(iban)
-
       val localIpAddress = InetAddress.getLocalHost.getHostAddress
-      println(s"${iban} | C_ | ${localIpAddress}")
+      println(s"- | ${iban} | ${localIpAddress} | C_")
 
+      val ref = contoRef(iban)
       ref
         .ask[Conferma](replyTo => CreaConto(iban, importoIniziale, replyTo))
         .map {
@@ -57,11 +56,10 @@ class SimpleServiceImpl(
 
   override def versaInConto(iban: String) =
     ServiceCall { importo =>
-      val ref = contoRef(iban)
-
       val localIpAddress = InetAddress.getLocalHost.getHostAddress
-      println(s"${iban} | V_ | ${localIpAddress}")
+      println(s"- | ${iban} | ${localIpAddress} | V_")
 
+      val ref = contoRef(iban)
       ref
         .ask[Conferma](replyTo => VersaInConto(importo, replyTo))
         .map {
@@ -73,11 +71,10 @@ class SimpleServiceImpl(
 
   override def prelevaDaConto(iban: String) =
     ServiceCall { importo =>
-      val ref = contoRef(iban)
-
       val localIpAddress = InetAddress.getLocalHost.getHostAddress
-      println(s"${iban} | P_ | ${localIpAddress}")
+      println(s"- | ${iban} | ${localIpAddress} | P_")
 
+      val ref = contoRef(iban)
       ref
         .ask[Conferma](replyTo => PrelevaDaConto(importo, replyTo))
         .map {
@@ -89,10 +86,8 @@ class SimpleServiceImpl(
 
   override def bilancioConto(iban: String) =
     ServiceCall { _ =>
-      import java.net.InetAddress
-
       val localIpAddress = InetAddress.getLocalHost.getHostAddress
-      println(s"${iban} | B_ | ${localIpAddress}")
+      println(s"- | ${iban} | ${localIpAddress} | B_")
 
       val ref = contoRef(iban)
       ref

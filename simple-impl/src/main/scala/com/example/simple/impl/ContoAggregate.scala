@@ -179,15 +179,15 @@ final case class Conto(iban: String, giaCreato: Boolean, importo: Int) {
 
     evt match {
       case ContoCreato(iban, bilancio) => {
-        println(s"${iban} | _c | ${localIpAddress}")
+        println(s". | ${iban} | ${localIpAddress} | _c")
         copy(iban, giaCreato = true, bilancio)
       }
       case VersatoInConto(_, bilancio) => {
-        println(s"${iban} | _v | ${localIpAddress}")
+        println(s". | ${iban} | ${localIpAddress} | _v")
         copy(importo = bilancio)
       }
       case PrelevatoDaConto(_, bilancio) => {
-        println(s"${iban} | _p | ${localIpAddress}")
+        println(s". | ${iban} | ${localIpAddress} | _p")
         copy(importo = bilancio)
       }
     }
