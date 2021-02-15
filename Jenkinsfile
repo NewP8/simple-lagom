@@ -64,11 +64,13 @@ pipeline {
       }
     }
 
-//     stage('ingress') {
-//       steps {
-//         sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/kong-edit.yaml -n ${APPS_NAMESPACE}'
-//         sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/simple-ingress.yaml -n ${APPS_NAMESPACE}'
-//       }
-//     }
+    stage('ingress') {
+      steps {
+        sh 'helm repo add nginx-stable https://helm.nginx.com/stable'
+        sh 'helm repo update'
+        sh 'helm install nginx-ingress nginx-stable/nginx-ingress'
+        sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/simple-ingress.yaml -n ${APPS_NAMESPACE}'
+      }
+    }
   }
 }
