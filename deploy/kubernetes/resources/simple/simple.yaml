@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: simple
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: simple
@@ -30,7 +30,7 @@ spec:
                   name: simple-secret
                   key: db-password
             - name: REQUIRED_CONTACT_POINT_NR
-              value: "2"
+              value: "3"
           resources:
             limits:
               memory: 512Mi
@@ -66,4 +66,4 @@ spec:
     - name: http
       port: 9000
       targetPort: 9000
-  type: LoadBalancer
+# type: LoadBalancer

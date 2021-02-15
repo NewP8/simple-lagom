@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: simple-ingress
+  annotations:
+    kubernetes.io/ingress.class: kong
+spec:
+  rules:
+    - http:
+        paths:
+          - path: "/api/conto"
+            backend:
+              serviceName: simple
+              servicePort: 9000
+          - path: "/api/versa"
+            backend:
+              serviceName: simple
+              servicePort: 9000
+          - path: "/api/preleva"
+            backend:
+              serviceName: simple
+              servicePort: 9000
+          - path: "/api/versione"
+            backend:
+              serviceName: simple
+              servicePort: 9000

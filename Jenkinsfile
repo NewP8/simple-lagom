@@ -55,6 +55,13 @@ pipeline {
       }
     }
 
+    stage('kong') {
+      steps {
+        sh 'kubectl create --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/kong-edit.yaml -n ${APPS_NAMESPACE}'
+        sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/kong/simple-ingress.yaml -n ${APPS_NAMESPACE}'
+      }
+    }
+
     stage('simple') {
       steps {
         // sh 'kubectl apply --cluster gke_${GOOGLE_PROJECT_NAME}_${GOOGLE_ZONE_NAME}_${GOOGLE_TEST_CLUSTER_NAME} -f deploy/kubernetes/resources/simple/postgres-simple.yaml -n ${APPS_NAMESPACE}'
