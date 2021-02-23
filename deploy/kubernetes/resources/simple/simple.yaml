@@ -68,6 +68,9 @@ spec:
     - name: http
       port: 9000
       targetPort: 9000
+    - name: management
+      port: 8558
+      targetPort: 8558
   clusterIP: None
   publishNotReadyAddresses: true
 # type: LoadBalancer

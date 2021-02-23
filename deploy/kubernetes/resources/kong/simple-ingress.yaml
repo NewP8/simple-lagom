@@ -25,3 +25,7 @@ spec:
             backend:
               serviceName: simple
               servicePort: 9000
+          - path: "/cluster/members"
+            backend:
+              serviceName: simple
+              servicePort: 8558
